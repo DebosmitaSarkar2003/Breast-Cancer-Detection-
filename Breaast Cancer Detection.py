@@ -1,0 +1,42 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+
+# 1. Load the "Real" Raw Dataset
+# We assume the file is named 'data.csv'
+df = pd.read_csv('data.csv')
+
+# 2. Data Cleaning & Preparation
+# Drop the 'id' column (it's unique for every patient and useless for prediction)
+# Drop 'Unnamed: 32' (an empty column that often appears in this specific Kaggle CSV)
+df = df.drop(columns=['id', 'Unnamed: 32'], errors='ignore')
+
+# Convert the diagnosis column ('M' for Malignant, 'B' for Benign) into numbers
+# This is necessary because models only understand numbers, not letters.
+label_encoder = LabelEncoder()
+df['diagnosis'] = label_encoder.fit_transform(df['diagnosis']) 
+# Now: M = 1, B = 0 (or vice versa, check label_encoder.classes_)
+
+# Define Features (X) and Target (y)
+X = df.drop(columns=['diagnosis']) # Everything except the diagnosis
+y = df['diagnosis']                # Only the diagnosis
+
+# 3. Split Data (80% Train, 20% Test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 4. Scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# 5. Build Model
+model = LogisticRegression()
+model.fit(X_train_scaled, y_train)
+
+# 6. Evaluate
+y_pred = model.predict(X_test_scaled)
+print(f"Accuracy: {accuracy_score(y_test, y_pred) * 100:.2f}%")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
